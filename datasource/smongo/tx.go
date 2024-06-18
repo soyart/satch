@@ -1,4 +1,4 @@
-package satchmongo
+package smongo
 
 import (
 	"github.com/sirupsen/logrus"
@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// Wraps a simple Mongo find inside a callback that can be sent to a MongoDB transaction
 func TxFind(
 	coll *mongo.Collection,
 	filter interface{},
@@ -22,7 +23,7 @@ func TxFind(
 	}
 }
 
-// Wraps bulk writes of w inside a callback that can be sent to a MongoDB transaction
+// Wraps bulk writes inside a callback that can be sent to a MongoDB transaction
 func TxBulkWrite(
 	coll *mongo.Collection,
 	writes []mongo.WriteModel,
@@ -38,6 +39,8 @@ func TxBulkWrite(
 	}
 }
 
+// Wraps bulk writes across multiple collections inside a callback that can be sent to a MongoDB transaction.
+// The collWrites are represented as map of collection name to writes.
 func TxBulkWriteColls(
 	db *mongo.Database,
 	collWrites map[string][]mongo.WriteModel,
@@ -76,6 +79,7 @@ func TxInsertMany(
 	}
 }
 
+// Wraps updateMany inside a callback that can be sent to a MongoDB transaction
 func TxUpdateMany(
 	coll *mongo.Collection,
 	filter interface{},
@@ -92,6 +96,7 @@ func TxUpdateMany(
 	}
 }
 
+// Wraps deleteMany inside a callback that can be sent to a MongoDB transaction
 func TxDeleteMany(
 	coll *mongo.Collection,
 	filter interface{},

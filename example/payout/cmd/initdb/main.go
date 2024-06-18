@@ -2,20 +2,18 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"log"
-	"reflect"
-	"strconv"
-	"strings"
+	"os"
 
-	"github.com/soyart/satch/datasource/satchmongo"
+	"github.com/soyart/satch/datasource/smongo"
 	"github.com/soyart/satch/example/payout"
 )
 
 func main() {
 	ctx := context.Background()
 
-	mg, err := satchmongo.NewMongoDB(ctx, satchmongo.MongoDBConfig{
+	mg, err := smongo.NewClient(ctx, smongo.MongoDBConfig{
 		Hosts:    "localhost:47017",
 		Admin:    "admin",
 		Username: "test_user",
@@ -25,72 +23,50 @@ func main() {
 		panic(err)
 	}
 
-	db := "example-payout"
+	var customers []payout.Customer
+	var accounts []payout.Account
+	var payouts []payout.Payout
 
-	collCustomers := mg.Collection(db, "customers")
-	// collPayouts := mg.Collection(db, "payouts")
-	// collAccounts := mg.Collection(db, "accounts")
-	// _, _, _ = collPayouts, collAccounts, collCustomers
+	load("./example/payout/mock/customers.json", &customers)
+	load("./example/payout/mock/accounts.json", &accounts)
+	load("./example/payout/mock/payouts.json", &payouts)
 
-	custs := mockCustomers(0, 10, trueFn, trueFn)
-	log.Println("writing insertMany customers")
-
-	result, err := collCustomers.InsertMany(ctx, sliceInterface(custs))
+	db := mg.Unwrap().Database(payout.DB)
+	_, err = smongo.InsertMany(ctx, db.Collection(payout.CollectionCustomers), sliceInf(customers))
 	if err != nil {
-		log.Println("error inserting many customers")
 		panic(err)
 	}
 
-	log.Println("resultFind", "type", reflect.TypeOf(result).String(), "value", result)
+	_, err = smongo.InsertMany(ctx, db.Collection(payout.CollectionAccounts), sliceInf(accounts))
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = smongo.InsertMany(ctx, db.Collection(payout.CollectionPayouts), sliceInf(payouts))
+	if err != nil {
+		panic(err)
+	}
 }
 
-func trueFn(int) bool  { return true }
-func falseFn(int) bool { return false }
+func load(filename string, result interface{}) {
+	b, err := os.ReadFile(filename)
+	if err != nil {
+		log.Printf("failed to read file '%s'", filename)
+		panic(err)
+	}
 
-func sliceInterface[T any](slice []T) []interface{} {
-	result := make([]interface{}, len(slice))
-	for i := range slice {
-		result[i] = slice[i]
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		log.Printf("failed to unmarshal from file '%s'", filename)
+		panic(err)
+	}
+}
+
+func sliceInf[T any](data []T) []interface{} {
+	result := make([]interface{}, len(data))
+	for i := range data {
+		result[i] = data[i]
 	}
 
 	return result
-}
-
-func mockCustomers(start, end int, banFn, crimeFn func(int) bool) []payout.Customer {
-	n := end - start
-	custs := make([]payout.Customer, n)
-	for i := start; i < end; i++ {
-		custs[i] = payout.Customer{
-			ID:       fmt.Sprintf("cust_%d", i),
-			Name:     fmt.Sprintf("custname_%d", i),
-			Banned:   banFn(i),
-			Criminal: crimeFn(i),
-		}
-	}
-
-	return custs
-}
-
-func mockAccounts(customers []payout.Customer, accFunc func(*payout.Customer) []payout.Account) []payout.Account {
-	accounts := []payout.Account{}
-	for i := range customers {
-		cust := &customers[i]
-		accounts = append(accounts, accFunc(cust)...)
-	}
-
-	return accounts
-}
-
-func extractTrailingInt(s string) int {
-	parts := strings.Split(s, "_")
-	if len(parts) < 2 {
-		panic("bad string")
-	}
-
-	i, err := strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	return int(i)
 }

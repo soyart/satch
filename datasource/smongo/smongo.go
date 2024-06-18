@@ -1,6 +1,9 @@
-package satchmongo
+// smongo provides opinionated building blocks for safe MongoDB transactions in batch jobs
+//
+// It focuses heavily on transactions, so if your use cases do not concern transactions,
+// you can just implement your own satch.DataSource without using this package
 
-// Opinionated building blocks for MongoDB transactions in batch jobs
+package smongo
 
 import (
 	"context"
@@ -9,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -26,7 +30,7 @@ type MongoDB struct {
 	cli *mongo.Client
 }
 
-func NewMongoDB(
+func NewClient(
 	ctx context.Context,
 	conf MongoDBConfig,
 	opts ...*options.ClientOptions,
@@ -60,6 +64,7 @@ func (m *MongoDB) Collection(db, coll string) *Collection {
 	return &Collection{coll: m.cli.Database(db).Collection(coll)}
 }
 
+// DB-level transaction
 func WithTxDb(
 	ctx context.Context,
 	db *mongo.Database,
@@ -94,6 +99,7 @@ func WithTxDb(
 	return result, nil
 }
 
+// DB-level transaction for a single collection
 func WithTxColl(
 	ctx context.Context,
 	coll *mongo.Collection,

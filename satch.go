@@ -3,6 +3,7 @@ package satch
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -28,7 +29,7 @@ type Job interface {
 	// Process inputs and returns the output to be committed
 	// If you want to have side-effects that persists regardless of any error,
 	// then you'd probably want to do it inside Run here
-	Run(ctx context.Context, inputs interface{}) (output interface{}, err error)
+	Run(ctx context.Context, inputs interface{}, now time.Time) (output interface{}, err error)
 }
 
 // Start starts a satch job. It aborts whenever an error surfaces.
@@ -61,12 +62,14 @@ func Start(ctx context.Context, job Job, ds DataSource, conf Config) error {
 		}
 	}
 
+	start := time.Now()
+
 	inputs, err := ds.Inputs(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "failed to get inputs for job %s", job.ID())
 	}
 
-	results, err := job.Run(ctx, inputs)
+	results, err := job.Run(ctx, inputs, start)
 	if err != nil {
 		return errors.Wrapf(err, "failed to run job %s", job.ID())
 	}

@@ -8,11 +8,11 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github.com/sirupsen/logrus"
-	"github.com/soyart/satch/datasource/satchmongo"
+	"github.com/soyart/satch/datasource/smongo"
 )
 
 type Job struct {
@@ -20,7 +20,7 @@ type Job struct {
 }
 
 type Inputs struct {
-	T         time.Time // Settlement date
+	CutOffT   time.Time // Settlement date cutoff
 	Payouts   []Payout
 	Customers []Customer
 	Accounts  []Account
@@ -61,14 +61,14 @@ func (j *Job) Run(ctx context.Context, inputs interface{}) (interface{}, error) 
 const DB = "example-payout"
 
 type dataSource struct {
-	db *satchmongo.MongoDB
+	db *smongo.MongoDB
 }
 
 func (d *dataSource) Unwrap() *mongo.Client {
 	return d.db.Unwrap()
 }
 
-func (d *dataSource) UnwrapSatch() *satchmongo.MongoDB {
+func (d *dataSource) UnwrapSatch() *smongo.MongoDB {
 	return d.db
 }
 
@@ -76,7 +76,7 @@ func (d *dataSource) Collection(db, coll string) *mongo.Collection {
 	return d.db.Collection(db, coll).Unwrap()
 }
 
-func (d *dataSource) CollectionSatch(db, coll string) *satchmongo.Collection {
+func (d *dataSource) CollectionSatch(db, coll string) *smongo.Collection {
 	return d.db.Collection(db, coll)
 }
 
@@ -128,9 +128,9 @@ func (d *dataSource) Commit(ctx context.Context, data interface{}) error {
 	}
 
 	db := d.Unwrap().Database(DB)
-	tx := satchmongo.TxBulkWriteColls(db, outputs)
+	tx := smongo.TxBulkWriteColls(db, outputs)
 
-	resultTx, err := satchmongo.WithTxDb(ctx, db, tx)
+	resultTx, err := smongo.WithTxDb(ctx, db, tx)
 	if err != nil {
 		return err
 	}

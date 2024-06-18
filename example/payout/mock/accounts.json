@@ -1,0 +1,112 @@
+[
+    {
+        "number": "acc_0",
+        "ownerID": "cust_0",
+        "createdAt": 1718724834,
+        "suspendedAt": 1718724834,
+        "balance": 0,
+        "suspended": true
+    },
+    {
+        "number": "acc_1",
+        "ownerID": "cust_1",
+        "createdAt": 1718724894,
+        "suspendedAt": 1718728434,
+        "balance": 4000,
+        "suspended": true
+    },
+    {
+        "number": "acc_1",
+        "ownerID": "cust_1",
+        "createdAt": 1718724894,
+        "balance": 4000
+    },
+    {
+        "number": "acc_3",
+        "ownerID": "cust_2",
+        "createdAt": 1718724834,
+        "suspendedAt": 1718732034,
+        "balance": 4000,
+        "suspended": true
+    },
+    {
+        "number": "acc_4",
+        "ownerID": "cust_3",
+        "createdAt": 1718724894,
+        "suspendedAt": 1718724834,
+        "balance": 8000,
+        "suspended": true
+    },
+    {
+        "number": "acc_4",
+        "ownerID": "cust_3",
+        "createdAt": 1718724894,
+        "balance": 8000
+    },
+    {
+        "number": "acc_6",
+        "ownerID": "cust_4",
+        "createdAt": 1718724834,
+        "suspendedAt": 1718728434,
+        "balance": 8000,
+        "suspended": true
+    },
+    {
+        "number": "acc_7",
+        "ownerID": "cust_5",
+        "createdAt": 1718724894,
+        "suspendedAt": 1718732034,
+        "balance": 12000,
+        "suspended": true
+    },
+    {
+        "number": "acc_7",
+        "ownerID": "cust_5",
+        "createdAt": 1718724894,
+        "balance": 12000
+    },
+    {
+        "number": "acc_9",
+        "ownerID": "cust_6",
+        "createdAt": 1718724834,
+        "suspendedAt": 1718724834,
+        "balance": 12000,
+        "suspended": true
+    },
+    {
+        "number": "acc_10",
+        "ownerID": "cust_7",
+        "createdAt": 1718724894,
+        "suspendedAt": 1718728434,
+        "balance": 16000,
+        "suspended": true
+    },
+    {
+        "number": "acc_10",
+        "ownerID": "cust_7",
+        "createdAt": 1718724894,
+        "balance": 16000
+    },
+    {
+        "number": "acc_12",
+        "ownerID": "cust_8",
+        "createdAt": 1718724834,
+        "suspendedAt": 1718732034,
+        "balance": 16000,
+        "suspended": true
+    },
+    {
+        "number": "acc_13",
+        "ownerID": "cust_9",
+        "createdAt": 1718724894,
+        "suspendedAt": 1718724834,
+        "balance": 3000,
+        "suspended": true
+    },
+    {
+        "number": "acc_13",
+        "ownerID": "cust_9",
+        "createdAt": 1718724894,
+        "balance": 3000
+    }
+]

@@ -4,14 +4,15 @@ import (
 	"context"
 	"log"
 
-	"github.com/soyart/satch/datasource/satchmongo"
-	"github.com/soyart/satch/example/payout"
 	"go.mongodb.org/mongo-driver/bson"
+
+	"github.com/soyart/satch/datasource/smongo"
+	"github.com/soyart/satch/example/payout"
 )
 
 func main() {
 	ctx := context.Background()
-	mg, err := satchmongo.NewMongoDB(ctx, satchmongo.MongoDBConfig{
+	mg, err := smongo.NewClient(ctx, smongo.MongoDBConfig{
 		Hosts:    "localhost:47017",
 		Admin:    "lineman-admin",
 		Username: "test_user",

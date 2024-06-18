@@ -5,38 +5,38 @@ import (
 )
 
 type Payout struct {
-	T          time.Time `bson:"t"` // Settlement date
-	CreatedAt  time.Time `bson:"created_at"`
-	UpdatedAt  time.Time `bson:"updated_at,omitempty"`
-	SettledAt  time.Time `bson:"settled_at,omitempty"`
-	CanceledAt time.Time `bson:"canceled_at,omitempty"`
-	ID         string    `bson:"id"`
-	From       string    `bson:"from"`
-	To         string    `bson:"to"`
-	Remarks    string    `bson:"remarks,omitempty"`
-	Amount     float64   `bson:"amount"`
-	Settled    bool      `bson:"settled,omitempty"`
-	Canceled   bool      `bson:"canceled,omitempty"`
+	ID         string  `bson:"id" json:"id"`
+	From       string  `bson:"from" json:"from"`
+	To         string  `bson:"to" json:"to"`
+	Remarks    string  `bson:"remarks,omitempty" json:"remarks,omitempty"`
+	T          int64   `bson:"t" json:"t"`
+	CreatedAt  int64   `bson:"created_at" json:"createdAt,omitempty"`
+	UpdatedAt  int64   `bson:"updated_at,omitempty" json:"updatedAt,omitempty"`
+	SettledAt  int64   `bson:"settled_at,omitempty" json:"settledAt,omitempty"`
+	CanceledAt int64   `bson:"canceled_at,omitempty" json:"canceledAt,omitempty"`
+	Amount     float64 `bson:"amount" json:"amount"`
+	Settled    bool    `bson:"settled,omitempty" json:"settled,omitempty"`
+	Canceled   bool    `bson:"canceled,omitempty" json:"canceled,omitempty"`
 }
 
 type Account struct {
-	CreatedAt   time.Time `bson:"created_at"`
-	UpdatedAt   time.Time `bson:"updated_at,omitempty"`
-	SuspendedAt time.Time `bson:"suspended_at,omitempty"`
-	Number      string    `bson:"number"`
-	OwnerID     string    `bson:"owner_id"`
-	Balance     float64   `bson:"balance"`
-	Suspended   bool      `bson:"suspended,omitempty"`
+	Number      string  `bson:"number" json:"number,omitempty"`
+	OwnerID     string  `bson:"owner_id" json:"ownerID,omitempty"`
+	CreatedAt   int64   `bson:"created_at" json:"createdAt"`
+	UpdatedAt   int64   `bson:"updated_at,omitempty" json:"updatedAt,omitempty"`
+	SuspendedAt int64   `bson:"suspended_at,omitempty" json:"suspendedAt,omitempty"`
+	Balance     float64 `bson:"balance" json:"balance"`
+	Suspended   bool    `bson:"suspended,omitempty" json:"suspended,omitempty"`
 }
 
 type Customer struct {
-	CreatedAt time.Time `bson:"created_at"`
-	UpdatedAt time.Time `bson:"updated_at,omitempty"`
-	BannedAt  time.Time `bson:"banned_at"`
-	ID        string    `bson:"id"`
-	Name      string    `bson:"name"`
-	Banned    bool      `bson:"banned,omitempty"`
-	Criminal  bool      `bson:"criminal,omitempty"`
+	ID        string `bson:"id" json:"id"`
+	Name      string `bson:"name" json:"name"`
+	CreatedAt int64  `bson:"created_at" json:"createdAt"`
+	UpdatedAt int64  `bson:"updated_at,omitempty" json:"updatedAt,omitempty"`
+	BannedAt  int64  `bson:"banned_at" json:"bannedAt,omitempty"`
+	Banned    bool   `bson:"banned,omitempty" json:"banned"`
+	Criminal  bool   `bson:"criminal,omitempty" json:"criminal"`
 }
 
 // Pays out on T+1, while also banning suspicious customers,
@@ -76,7 +76,7 @@ func ProcessPayout(
 		canceled:  make(Set[string]),
 	}
 
-	tPlusTwo := inputs.T.Add(48 * time.Hour)
+	tPlusTwo := inputs.CutOffT.Add(48 * time.Hour)
 
 	for i := range payouts {
 		p := &payouts[i]
@@ -150,7 +150,7 @@ func ProcessPayout(
 			continue
 		}
 
-		if p.T.After(tPlusTwo) {
+		if time.Unix(p.T, 0).After(tPlusTwo) {
 			continue
 		}
 
