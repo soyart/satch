@@ -70,7 +70,7 @@ func mockAccounts(customers []payout.Customer, accsFunc func(cust *payout.Custom
 	number := 0
 	for i := range customers {
 		cust := &customers[i]
-		accs := accsFunc(cust, number, 3)
+		accs := accsFunc(cust, number, 13)
 
 		for j := range accs {
 			accs[j].Number = fmt.Sprintf("acc_%d", number)

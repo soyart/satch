@@ -273,6 +273,8 @@ func (c *Collection) Find(
 		return err
 	}
 
+	defer cursor.Close(ctx)
+
 	return cursor.All(ctx, results)
 }
 

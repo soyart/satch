@@ -2,6 +2,8 @@ package payout
 
 import (
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Payout struct {
@@ -50,7 +52,11 @@ func ProcessPayout(
 	Changes,
 	error,
 ) {
-	payouts := make([]Payout, 0, len(inputs.Payouts))
+	logrus.Infof("inputs.customers: %v", len(inputs.Customers))
+	logrus.Infof("inputs.accounts: %v", len(inputs.Accounts))
+	logrus.Infof("inputs.payouts: %v", len(inputs.Payouts))
+
+	payouts := make([]Payout, len(inputs.Payouts))
 	customers := make(map[string]*Customer)
 	accounts := make(map[string]*Account)
 
@@ -82,21 +88,27 @@ func ProcessPayout(
 	for i := range payouts {
 		p := &payouts[i]
 
+		logrus.Infof("start processing payout %s", p.ID)
+
 		from, ok := accounts[p.From]
 		if !ok {
+			logrus.Infof("cancelPayout: no from")
 			changes.cancelPayout(p)
 		}
 
 		to, ok := accounts[p.To]
 		if !ok {
+			logrus.Infof("cancelPayout: no to")
 			changes.cancelPayout(p)
 		}
 
 		if from.Suspended {
+			logrus.Infof("cancelPayout: suspended from")
 			changes.cancelPayout(p)
 		}
 
 		if to.Suspended {
+			logrus.Infof("cancelPayout: suspended to")
 			changes.cancelPayout(p)
 		}
 
@@ -104,57 +116,77 @@ func ProcessPayout(
 
 		fromCust, ok := customers[from.OwnerID]
 		if !ok {
+			logrus.Infof("cancelPayout: no cust from")
 			changes.cancelPayout(p)
 		}
 
 		toCust, ok := customers[to.OwnerID]
 		if !ok {
+			logrus.Infof("cancelPayout: no cust to")
 			changes.cancelPayout(p)
 		}
 
 		if fromCust.Banned {
+			logrus.Infof("cancelPayout + suspend from: banned from")
 			changes.cancelPayout(p)
 			changes.suspendAccount(from)
 		}
 
 		if toCust.Banned {
+			logrus.Infof("cancelPayout + suspend to: banned to")
 			changes.cancelPayout(p)
 			changes.suspendAccount(to)
 		}
 
 		if fromCust.Criminal {
+			logrus.Infof("cancelPayout + ban to + suspend to: criminal from")
 			changes.cancelPayout(p)
 			changes.banCustomer(toCust)
 			changes.suspendAccount(to)
 		}
 
 		if toCust.Criminal {
+			logrus.Infof("cancelPayout + ban from + suspend from: criminal to")
 			changes.cancelPayout(p)
 			changes.banCustomer(fromCust)
 			changes.suspendAccount(from)
 		}
 
 		switch {
-		case
-			changes.canceled.Contains(p.ID),
-			changes.suspended.Contains(from.Number),
-			changes.suspended.Contains(to.Number),
-			changes.banned.Contains(fromCust.ID),
-			changes.banned.Contains(toCust.ID):
+		case changes.canceled.Contains(p.ID):
+			logrus.Infof("skipping payout %s due to canceled payout", p.ID)
+			continue
 
+		case changes.suspended.Contains(from.Number):
+			logrus.Infof("skipping payout %s due to suspended from account", p.ID)
+			continue
+
+		case changes.suspended.Contains(to.Number):
+			logrus.Infof("skipping payout %s due to suspended to account", p.ID)
+			continue
+
+		case changes.banned.Contains(fromCust.ID):
+			logrus.Infof("skipping payout %s due to banned customer", p.ID)
+			continue
+
+		case changes.banned.Contains(toCust.ID):
+			logrus.Infof("skipping payout %s due to suspended from account", p.ID)
 			continue
 		}
 
 		// Transfer and settle
 		if from.Balance < p.Amount {
 			changes.cancelPayout(p)
+			logrus.Infof("skipping payout %s due to insufficient balance", p.ID)
 			continue
 		}
 
 		if time.Unix(p.T, 0).After(tPlusTwo) {
+			logrus.Infof("skipping payout %s due to T date", p.ID)
 			continue
 		}
 
+		logrus.Infof("settling payout %s", p.ID)
 		changes.settlePayout(p, from, to)
 	}
 

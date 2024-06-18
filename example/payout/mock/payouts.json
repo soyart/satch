@@ -23,8 +23,8 @@
     {
         "id": "payout_3",
         "t": 1718726969,
-        "from": "acc_18",
+        "from": "acc_20",
         "to": "acc_19",
-        "amount": 6990
+        "amount": 3000
     }
 ]

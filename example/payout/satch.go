@@ -26,7 +26,10 @@ type Job struct {
 	start time.Time
 }
 
-var _ satch.Job = &Job{}
+var (
+	_ satch.Job        = &Job{}
+	_ satch.DataSource = &dataSource{}
+)
 
 type Inputs struct {
 	CutOffT   time.Time // Settlement date cutoff
@@ -71,6 +74,9 @@ func (j *Job) Run(ctx context.Context, inputs interface{}, now time.Time) (inter
 		return nil, err
 	}
 
+	logrus.Infof("changes: %+v", changes)
+	logrus.Infof("num changesList: %d", len(changes.List))
+
 	return changes.OutputsV2(j.start), err
 }
 
@@ -106,21 +112,21 @@ func (d *dataSource) Inputs(ctx context.Context) (interface{}, error) {
 	var customers []Customer
 	err := collCustomers.Find(ctx, bson.M{}, &customers)
 	if err != nil {
-		log.Println("failed to find input customers")
-		return nil, err
-	}
-
-	var payouts []Payout
-	err = collPayouts.Find(ctx, bson.M{}, &payouts)
-	if err != nil {
-		log.Println("failed to find input payouts")
+		log.Println("failed to find input customers:", err.Error())
 		return nil, err
 	}
 
 	var accounts []Account
 	err = collAccounts.Find(ctx, bson.M{}, &accounts)
 	if err != nil {
-		log.Println("failed to find input accounts")
+		log.Println("failed to find input accounts:", err.Error())
+		return nil, err
+	}
+
+	var payouts []Payout
+	err = collPayouts.Find(ctx, bson.M{}, &payouts)
+	if err != nil {
+		log.Println("failed to find input payouts:", err.Error())
 		return nil, err
 	}
 
