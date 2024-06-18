@@ -17,7 +17,7 @@ const (
 type Change interface {
 	Collection() string
 	Filter() bson.M
-	SetUpdate(now time.Time) bson.M
+	SetUpdate(now int64) bson.M
 }
 
 type Changes struct {
@@ -51,9 +51,11 @@ func (c *Changes) OutputsV2(now time.Time) OutputsV2 {
 				},
 			}).
 			SetUpdate(bson.M{
-				"banned":     true,
-				"banned_at":  now,
-				"updated_at": now,
+				"$set": bson.M{
+					"banned":     true,
+					"banned_at":  now.Unix(),
+					"updated_at": now.Unix(),
+				},
 			}),
 	}
 
@@ -68,7 +70,7 @@ func (c *Changes) OutputsV2(now time.Time) OutputsV2 {
 			writes[i] = mongo.
 				NewUpdateOneModel().
 				SetFilter(change.Filter()).
-				SetUpdate(change.SetUpdate(now))
+				SetUpdate(change.SetUpdate(now.Unix()))
 		}
 
 		outputsV2[coll] = writes
@@ -94,9 +96,11 @@ func (c *Changes) OutputsV1(now time.Time) OutputsV1 {
 			},
 		}).
 		SetUpdate(bson.M{
-			"banned":     true,
-			"banned_at":  now,
-			"updated_at": now,
+			"$set": bson.M{
+				"banned":     true,
+				"banned_at":  now.Unix(),
+				"updated_at": now.Unix(),
+			},
 		})
 
 	changesAccs := colls[CollectionAccounts]
@@ -106,7 +110,7 @@ func (c *Changes) OutputsV1(now time.Time) OutputsV1 {
 		write := mongo.
 			NewUpdateOneModel().
 			SetFilter(change.Filter()).
-			SetUpdate(change.SetUpdate(now))
+			SetUpdate(change.SetUpdate(now.Unix()))
 
 		writesAccs = append(writesAccs, write)
 	}
@@ -118,7 +122,7 @@ func (c *Changes) OutputsV1(now time.Time) OutputsV1 {
 		write := mongo.
 			NewUpdateOneModel().
 			SetFilter(change.Filter()).
-			SetUpdate(change.SetUpdate(now))
+			SetUpdate(change.SetUpdate(now.Unix()))
 
 		writesPayouts = append(writesPayouts, write)
 	}
@@ -256,11 +260,13 @@ func (c ChangePayoutSettle) Filter() bson.M {
 	}
 }
 
-func (c ChangePayoutSettle) SetUpdate(now time.Time) bson.M {
+func (c ChangePayoutSettle) SetUpdate(now int64) bson.M {
 	return bson.M{
-		"settled":    true,
-		"settled_at": now,
-		"updated_at": now,
+		"$set": bson.M{
+			"settled":    true,
+			"settled_at": now,
+			"updated_at": now,
+		},
 	}
 }
 
@@ -274,11 +280,13 @@ func (c ChangePayoutCancel) Filter() bson.M {
 	}
 }
 
-func (c ChangePayoutCancel) SetUpdate(now time.Time) bson.M {
+func (c ChangePayoutCancel) SetUpdate(now int64) bson.M {
 	return bson.M{
-		"canceled":    true,
-		"canceled_at": now,
-		"updated_at":  now,
+		"$set": bson.M{
+			"canceled":    true,
+			"canceled_at": now,
+			"updated_at":  now,
+		},
 	}
 }
 
@@ -292,11 +300,13 @@ func (c ChangeAccountSuspend) Filter() bson.M {
 	}
 }
 
-func (c ChangeAccountSuspend) SetUpdate(now time.Time) bson.M {
+func (c ChangeAccountSuspend) SetUpdate(now int64) bson.M {
 	return bson.M{
-		"suspended":    true,
-		"suspended_at": now,
-		"updated_at":   now,
+		"$set": bson.M{
+			"suspended":    true,
+			"suspended_at": now,
+			"updated_at":   now,
+		},
 	}
 }
 
@@ -310,11 +320,13 @@ func (c ChangeCustomerBan) Filter() bson.M {
 	}
 }
 
-func (c ChangeCustomerBan) SetUpdate(now time.Time) bson.M {
+func (c ChangeCustomerBan) SetUpdate(now int64) bson.M {
 	return bson.M{
-		"banned":     true,
-		"banned_at":  now,
-		"updated_at": now,
+		"$set": bson.M{
+			"banned":     true,
+			"banned_at":  now,
+			"updated_at": now,
+		},
 	}
 }
 
@@ -329,11 +341,13 @@ func (c ChangeAccountTransfer) Filter() bson.M {
 	}
 }
 
-func (c ChangeAccountTransfer) SetUpdate(now time.Time) bson.M {
+func (c ChangeAccountTransfer) SetUpdate(now int64) bson.M {
 	return bson.M{
+		"$set": bson.M{
+			"updated_at": now,
+		},
 		"$inc": bson.M{
 			"balance": c.Amount,
 		},
-		"updated_at": now,
 	}
 }

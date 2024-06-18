@@ -17,13 +17,15 @@ func main() {
 		fmt.Println("---------")
 	}
 
-	custs := mockCustomers(0, 10, falseFn, falseFn)
+	custs := mockCustomers(0, 17*2, falseFn, falseFn)
 	j, _ := json.Marshal(custs)
 	pront(j)
 
 	accounts := mockAccounts(custs, mockAccountsForCustomer)
 	j, _ = json.Marshal(accounts)
 	pront(j)
+
+	fmt.Println("now unixTime", time.Now().Unix())
 
 	// payouts are mocked manually
 }
@@ -43,15 +45,20 @@ func sliceInterface[T any](slice []T) []interface{} {
 func mockCustomers(start, end int, banFn, crimeFn func(int) bool) []payout.Customer {
 	n := end - start
 	custs := make([]payout.Customer, n)
-	now := time.Now().Unix()
+	bankFoundedStr := "2020-03-27"
+	bankFounded, err := time.Parse("2006-01-02", bankFoundedStr)
+	if err != nil {
+		panic(err)
+	}
+
 	for i := start; i < end; i++ {
+		createdAt := bankFounded.Add(time.Duration(i*24) * time.Hour)
 		custs[i] = payout.Customer{
 			ID:        fmt.Sprintf("cust_%d", i),
 			Name:      fmt.Sprintf("custname_%d", i),
 			Banned:    banFn(i),
 			Criminal:  crimeFn(i),
-			CreatedAt: now,
-			UpdatedAt: now,
+			CreatedAt: createdAt.Unix(),
 		}
 	}
 
@@ -66,6 +73,7 @@ func mockAccounts(customers []payout.Customer, accsFunc func(cust *payout.Custom
 		accs := accsFunc(cust, number, 3)
 
 		for j := range accs {
+			accs[j].Number = fmt.Sprintf("acc_%d", number)
 			accounts = append(accounts, accs[j])
 			number++
 		}
@@ -90,7 +98,6 @@ func mockAccountsForCustomer(cust *payout.Customer, n int, mod int) []payout.Acc
 		}
 
 		accs[i] = payout.Account{
-			Number:      fmt.Sprintf("acc_%d", n),
 			OwnerID:     cust.ID,
 			CreatedAt:   unixTime(cust.CreatedAt).Add(time.Duration(x) * time.Minute).Unix(),
 			UpdatedAt:   0,

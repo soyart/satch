@@ -12,12 +12,21 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github.com/soyart/satch"
 	"github.com/soyart/satch/datasource/smongo"
 )
+
+const DB = "example-payout"
+
+type dataSource struct {
+	db *smongo.MongoDB
+}
 
 type Job struct {
 	start time.Time
 }
+
+var _ satch.Job = &Job{}
 
 type Inputs struct {
 	CutOffT   time.Time // Settlement date cutoff
@@ -40,28 +49,29 @@ func New() *Job {
 	return &Job{start: time.Now()}
 }
 
+func NewDS(mg *smongo.MongoDB) *dataSource {
+	return &dataSource{
+		db: mg,
+	}
+}
+
 func (j *Job) ID() string {
 	return fmt.Sprintf("job-payout-%s", j.start)
 }
 
-func (j *Job) Run(ctx context.Context, inputs interface{}) (interface{}, error) {
+func (j *Job) Run(ctx context.Context, inputs interface{}, now time.Time) (interface{}, error) {
 	inputsPayout, ok := inputs.(Inputs)
 	if !ok {
 		return nil, fmt.Errorf("unexpected inputs type: '%s'", reflect.TypeOf(inputs).String())
 	}
 
-	changes, err := ProcessPayout(inputsPayout)
+	inputsPayout.CutOffT = now
+	changes, err := ProcessPayout(inputsPayout, now)
 	if err != nil {
 		return nil, err
 	}
 
 	return changes.OutputsV2(j.start), err
-}
-
-const DB = "example-payout"
-
-type dataSource struct {
-	db *smongo.MongoDB
 }
 
 func (d *dataSource) Unwrap() *mongo.Client {
@@ -135,10 +145,19 @@ func (d *dataSource) Commit(ctx context.Context, data interface{}) error {
 		return err
 	}
 
-	resultColls, ok := resultTx.(map[string]*mongo.BulkWriteResult)
+	resultColls, ok := resultTx.(map[string]interface{})
 	if !ok {
-		logrus.Errorf("unexpected type for tx result: '%s'", reflect.TypeOf(resultColls).String())
+		logrus.Errorf("unexpected type for tx result: '%s'", reflect.TypeOf(resultTx).String())
 		return nil // Ignoring this error
+	}
+
+	for coll, result := range resultColls {
+		resultBulkWrite, ok := result.(*mongo.BulkWriteResult)
+		if !ok {
+			continue
+		}
+
+		logrus.Infof("%d documents modified for collection '%s'", resultBulkWrite.ModifiedCount, coll)
 	}
 
 	return nil

@@ -16,7 +16,7 @@ func TxFind(
 		// ctx will be replaced by caller to the active tx's context
 		result, err := coll.Find(ctx, filter, opts...)
 		if err != nil {
-			logrus.Errorf("find: error finding with %v filter", filter)
+			logrus.Errorf("find: error finding with %v filter from collection '%s': %s", filter, coll.Name(), err.Error())
 		}
 
 		return result, err
@@ -32,7 +32,7 @@ func TxBulkWrite(
 	return func(ctx mongo.SessionContext) (interface{}, error) {
 		result, err := coll.BulkWrite(ctx, writes, opts...)
 		if err != nil {
-			logrus.Errorf("bulkWrite: error bulk writing %d write models", len(writes))
+			logrus.Errorf("bulkWrite: error bulk writing %d write models to collection '%s': %s", len(writes), coll.Name(), err.Error())
 		}
 
 		return result, err
@@ -52,7 +52,7 @@ func TxBulkWriteColls(
 		for coll, writes := range collWrites {
 			result, err := db.Collection(coll).BulkWrite(ctx, writes, opts...)
 			if err != nil {
-				logrus.Errorf("bulkWrite: error bulk writing %d write models", len(writes))
+				logrus.Errorf("bulkWrite: error bulk writing %d write models to db '%s' for collection '%s': %s", len(writes), db.Name(), coll, err.Error())
 				return results, err
 			}
 
@@ -72,7 +72,7 @@ func TxInsertMany(
 	return func(ctx mongo.SessionContext) (interface{}, error) {
 		result, err := coll.InsertMany(ctx, inserts, opts...)
 		if err != nil {
-			logrus.Errorf("insertMany: error inserting %d documents", len(inserts))
+			logrus.Errorf("insertMany: error inserting %d documents to collection '%s': %s", len(inserts), coll.Name(), err.Error())
 		}
 
 		return result, err
@@ -89,7 +89,7 @@ func TxUpdateMany(
 	return func(ctx mongo.SessionContext) (interface{}, error) {
 		result, err := coll.UpdateMany(ctx, filter, updates, opts...)
 		if err != nil {
-			logrus.Errorf("update: error updating %d documents", len(updates))
+			logrus.Errorf("update: error updating %d documents in collection '%s': %s", len(updates), coll.Name(), err.Error())
 		}
 
 		return result, err
@@ -105,7 +105,7 @@ func TxDeleteMany(
 	return func(ctx mongo.SessionContext) (interface{}, error) {
 		result, err := coll.DeleteMany(ctx, filter, opts...)
 		if err != nil {
-			logrus.Errorf("update: error deleting documents '%s'", err)
+			logrus.Errorf("update: error deleting documents '%s' from collection '%s': %s", err, coll.Name(), err.Error())
 		}
 
 		return result, err

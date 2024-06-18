@@ -1,1 +1,30 @@
-[]
+[
+    {
+        "id": "payout_0",
+        "t": 1718726969,
+        "from": "acc_1",
+        "to": "acc_0",
+        "amount": 4000
+    },
+    {
+        "id": "payout_1",
+        "t": 1718726969,
+        "from": "acc_35",
+        "to": "acc_36",
+        "amount": 13000
+    },
+    {
+        "id": "payout_2",
+        "t": 1718726969,
+        "from": "acc_13",
+        "to": "acc_12",
+        "amount": 1500
+    },
+    {
+        "id": "payout_3",
+        "t": 1718726969,
+        "from": "acc_18",
+        "to": "acc_19",
+        "amount": 6990
+    }
+]

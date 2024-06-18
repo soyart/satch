@@ -45,6 +45,7 @@ type Customer struct {
 // ProcessPayout also modifies argument values
 func ProcessPayout(
 	inputs Inputs,
+	now time.Time,
 ) (
 	Changes,
 	error,
