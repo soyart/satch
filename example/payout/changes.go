@@ -139,7 +139,7 @@ func (c *Changes) banCustomer(cust *Customer) {
 	}
 
 	c.banned.Add(id)
-	c.List = append(c.List, ChangesCustomerBan(id))
+	c.List = append(c.List, ChangeCustomerBan(id))
 }
 
 func (c *Changes) suspendAccount(acc *Account) {
@@ -151,7 +151,7 @@ func (c *Changes) suspendAccount(acc *Account) {
 	}
 
 	c.suspended.Add(accNum)
-	c.List = append(c.List, ChangesAccountSuspend(accNum))
+	c.List = append(c.List, ChangeAccountSuspend(accNum))
 }
 
 func (c *Changes) cancelPayout(p *Payout) {
@@ -166,7 +166,7 @@ func (c *Changes) cancelPayout(p *Payout) {
 	}
 
 	c.canceled.Add(id)
-	c.List = append(c.List, ChangesPayoutCancel(id))
+	c.List = append(c.List, ChangePayoutCancel(id))
 }
 
 func (c *Changes) settlePayout(p *Payout, from, to *Account) {
@@ -181,14 +181,14 @@ func (c *Changes) settlePayout(p *Payout, from, to *Account) {
 		return
 	}
 
-	settlement := ChangesPayoutSettle(payoutID)
+	settlement := ChangePayoutSettle(payoutID)
 
-	transferFrom := ChangesAccountTransfer{
+	transferFrom := ChangeAccountTransfer{
 		Number: from.Number,
 		Amount: 0 - p.Amount,
 	}
 
-	transferTo := ChangesAccountTransfer{
+	transferTo := ChangeAccountTransfer{
 		Number: to.Number,
 		Amount: p.Amount,
 	}
@@ -236,27 +236,27 @@ func cancelPayoutsWithSuspendedAccounts(inputs Inputs, changes Changes) {
 }
 
 type (
-	ChangesPayoutSettle    string // Payout ID
-	ChangesPayoutCancel    string // Payout ID
-	ChangesAccountSuspend  string // Account number
-	ChangesCustomerBan     string // Customer ID
-	ChangesAccountTransfer struct {
+	ChangePayoutSettle    string // Payout ID
+	ChangePayoutCancel    string // Payout ID
+	ChangeAccountSuspend  string // Account number
+	ChangeCustomerBan     string // Customer ID
+	ChangeAccountTransfer struct {
 		Number string  // Account number
 		Amount float64 // Negative for outgoing transfers
 	}
 )
 
-func (c ChangesPayoutSettle) Collection() string {
+func (c ChangePayoutSettle) Collection() string {
 	return CollectionPayouts
 }
 
-func (c ChangesPayoutSettle) Filter() bson.M {
+func (c ChangePayoutSettle) Filter() bson.M {
 	return bson.M{
 		"number": c,
 	}
 }
 
-func (c ChangesPayoutSettle) SetUpdate(now time.Time) bson.M {
+func (c ChangePayoutSettle) SetUpdate(now time.Time) bson.M {
 	return bson.M{
 		"settled":    true,
 		"settled_at": now,
@@ -264,17 +264,17 @@ func (c ChangesPayoutSettle) SetUpdate(now time.Time) bson.M {
 	}
 }
 
-func (c ChangesPayoutCancel) Collection() string {
+func (c ChangePayoutCancel) Collection() string {
 	return CollectionPayouts
 }
 
-func (c ChangesPayoutCancel) Filter() bson.M {
+func (c ChangePayoutCancel) Filter() bson.M {
 	return bson.M{
 		"number": c,
 	}
 }
 
-func (c ChangesPayoutCancel) SetUpdate(now time.Time) bson.M {
+func (c ChangePayoutCancel) SetUpdate(now time.Time) bson.M {
 	return bson.M{
 		"canceled":    true,
 		"canceled_at": now,
@@ -282,17 +282,17 @@ func (c ChangesPayoutCancel) SetUpdate(now time.Time) bson.M {
 	}
 }
 
-func (c ChangesAccountSuspend) Collection() string {
+func (c ChangeAccountSuspend) Collection() string {
 	return CollectionAccounts
 }
 
-func (c ChangesAccountSuspend) Filter() bson.M {
+func (c ChangeAccountSuspend) Filter() bson.M {
 	return bson.M{
 		"number": c,
 	}
 }
 
-func (c ChangesAccountSuspend) SetUpdate(now time.Time) bson.M {
+func (c ChangeAccountSuspend) SetUpdate(now time.Time) bson.M {
 	return bson.M{
 		"suspended":    true,
 		"suspended_at": now,
@@ -300,17 +300,17 @@ func (c ChangesAccountSuspend) SetUpdate(now time.Time) bson.M {
 	}
 }
 
-func (c ChangesCustomerBan) Collection() string {
+func (c ChangeCustomerBan) Collection() string {
 	return CollectionCustomers
 }
 
-func (c ChangesCustomerBan) Filter() bson.M {
+func (c ChangeCustomerBan) Filter() bson.M {
 	return bson.M{
 		"id": c,
 	}
 }
 
-func (c ChangesCustomerBan) SetUpdate(now time.Time) bson.M {
+func (c ChangeCustomerBan) SetUpdate(now time.Time) bson.M {
 	return bson.M{
 		"banned":     true,
 		"banned_at":  now,
@@ -318,17 +318,18 @@ func (c ChangesCustomerBan) SetUpdate(now time.Time) bson.M {
 	}
 }
 
-func (c ChangesAccountTransfer) Collection() string {
+func (c ChangeAccountTransfer) Collection() string {
 	return CollectionAccounts
 }
 
-func (c ChangesAccountTransfer) Filter() bson.M {
+func (c ChangeAccountTransfer) Filter() bson.M {
 	return bson.M{
-		"number": c.Number,
+		"number":    c.Number,
+		"suspended": false,
 	}
 }
 
-func (c ChangesAccountTransfer) SetUpdate(now time.Time) bson.M {
+func (c ChangeAccountTransfer) SetUpdate(now time.Time) bson.M {
 	return bson.M{
 		"$inc": bson.M{
 			"balance": c.Amount,

@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	LockWrite bool `json:"lockWrite"`
-	LockRead  bool
+	LockRead  bool `json:"lockRead"`
 }
 
 type DataSource interface {
