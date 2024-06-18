@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github.com/sirupsen/logrus"
 	"github.com/soyart/satch/datasource/satchmongo"
 )
 
@@ -129,9 +130,15 @@ func (d *dataSource) Commit(ctx context.Context, data interface{}) error {
 	db := d.Unwrap().Database(DB)
 	tx := satchmongo.TxBulkWriteColls(db, outputs)
 
-	_, err := satchmongo.WithTxDb(ctx, db, tx)
+	resultTx, err := satchmongo.WithTxDb(ctx, db, tx)
 	if err != nil {
 		return err
+	}
+
+	resultColls, ok := resultTx.(map[string]*mongo.BulkWriteResult)
+	if !ok {
+		logrus.Errorf("unexpected type for tx result: '%s'", reflect.TypeOf(resultColls).String())
+		return nil // Ignoring this error
 	}
 
 	return nil
