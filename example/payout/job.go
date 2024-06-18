@@ -54,7 +54,7 @@ func (j *Job) Run(ctx context.Context, inputs interface{}) (interface{}, error) 
 		return nil, err
 	}
 
-	return changes.OutputsV1(j.start), err
+	return changes.OutputsV2(j.start), err
 }
 
 const DB = "example-payout"
@@ -121,35 +121,15 @@ func (d *dataSource) Inputs(ctx context.Context) (interface{}, error) {
 }
 
 func (d *dataSource) Commit(ctx context.Context, data interface{}) error {
-	outputs, ok := data.(OutputsV1)
+	outputs, ok := data.(OutputsV2)
 	if !ok {
 		return fmt.Errorf("unexpected data type: '%s'", reflect.TypeOf(data).String())
 	}
 
-	collPayouts := d.Collection(DB, "payouts")
-	collAccounts := d.Collection(DB, "accounts")
-	collCustomers := d.Collection(DB, "customers")
+	db := d.Unwrap().Database(DB)
+	tx := satchmongo.TxBulkWriteColls(db, outputs)
 
-	tx := func(mongo.SessionContext) (interface{}, error) {
-		_, err := collCustomers.BulkWrite(ctx, outputs.Customers)
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = collAccounts.BulkWrite(ctx, outputs.Accounts)
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = collPayouts.BulkWrite(ctx, outputs.Payouts)
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, nil
-	}
-
-	_, err := satchmongo.WithTxDb(ctx, d.db.Unwrap().Database(DB), tx)
+	_, err := satchmongo.WithTxDb(ctx, db, tx)
 	if err != nil {
 		return err
 	}
